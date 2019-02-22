@@ -10,28 +10,52 @@
         $(function () {
             $.ajax({
                 type: "Post",
-                url: "",
+                url: "http://192.168.1.32:8083/getFirstTreeList",
                 dataType: "json",
-                success: function (result) {
-                    var data = JSON.stringify(result);
+                success: function (firstData) {
                     $('#tree').treeview({
-                        data: data,
-                        levels: 1,
-                        onNodeSelected:function (event,data) {
+                        data: firstData,
+                        showIcon: false,
+                        onhoverColor: "#E8E8E8",
+                        showBorder: false,
+                        showTags: true,
+                        highlightSelected: true,
+                        highlightSearchResults: false,
+                        selectedBackColor: "#8D9CAA",
+                        levels: 3,
+                        onNodeSelected:function (event,firstData) {
                             $.ajax({
                                 type: "Post",
-                                url: "",
+                                url: "http://192.168.1.32:8083/getSecondTreeList",
                                 dataType: "json",
-                                data:{"pid":data.pid},
-                                success:function (result) {
-                                    var sondata = JSON.stringify(result);
-                                    console.log(sondata)
-                                    $('#tree').treeview({
-                                        data:sondata,
-                                        onNodeSelected:function (event,data) {
-
-                                        }
-                                    })
+                                data:{"firstId":firstData.id},
+                                success:function (secondData) {
+                                    for (var index = 0;index < secondData.length; index++){
+                                        var item = secondData[index];
+                                        $("#tree").treeview("addNode",[firstData.nodeId,{node:{text:item.text,id:item.id},silent: true}]);
+                                        // $("#tree").treeview({
+                                        //     onNodeSelected: function (event,secondData) {
+                                        //         $.ajax({
+                                        //             type: "Post",
+                                        //             url: "http://192.168.1.32:8083/getThirdTreeList",
+                                        //             dataType: "json",
+                                        //             data: {"secondId": secondData.id},
+                                        //             success: function (thirdData) {
+                                        //                 for (var index = 0; index < thirdData.length; index++) {
+                                        //                     var item = thirdData[index];
+                                        //                     $("#tree").treeview("addNode", [secondData.nodeId, {
+                                        //                         node: {
+                                        //                             text: item.text,
+                                        //                             id: item.id
+                                        //                         }, silent: true
+                                        //                     }]);
+                                        //                 }
+                                        //             }
+                                        //         })
+                                        //     }
+                                        // })
+                                        // thirdClick(item);
+                                    }
                                 }
                             })
                         }

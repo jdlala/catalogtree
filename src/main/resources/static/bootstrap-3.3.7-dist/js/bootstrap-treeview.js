@@ -33,20 +33,20 @@
 
 		levels: 2,
 
-		expandIcon: 'icon iconfont icon-sanjiaoxing-right',
-		collapseIcon: 'icon iconfont icon-sanjiaoxing-down',
-		emptyIcon: 'iconfont',
+		expandIcon: 'glyphicon glyphicon-plus',
+		collapseIcon: 'glyphicon glyphicon-minus',
+		emptyIcon: 'glyphicon',
 		nodeIcon: '',
 		selectedIcon: '',
-		checkedIcon: 'icon iconfont icon-xuanzhong',
-		uncheckedIcon: 'icon iconfont icon-weixuanzhong',
+		checkedIcon: 'glyphicon glyphicon-check',
+		uncheckedIcon: 'glyphicon glyphicon-unchecked',
 
-		color: '#2F4554', // '#000000',
+		color: undefined, // '#000000',
 		backColor: undefined, // '#FFFFFF',
 		borderColor: undefined, // '#dddddd',
-		onhoverColor: '#FFFFFF',//#f5f5f5
-		selectedColor: 'RGBA(47, 69, 84, 1)',
-		selectedBackColor: '#FFFFFF',
+		onhoverColor: '#F5F5F5',
+		selectedColor: '#FFFFFF',
+		selectedBackColor: '#428bca',
 		searchResultColor: '#D9534F',
 		searchResultBackColor: undefined, //'#FFFFFF',
 
@@ -126,6 +126,7 @@
 			toggleNodeExpanded: $.proxy(this.toggleNodeExpanded, this),
 			revealNode: $.proxy(this.revealNode, this),
 
+			addNode: $.proxy(this.addNode, this),
 			// Expand / collapse methods
 			checkAll: $.proxy(this.checkAll, this),
 			checkNode: $.proxy(this.checkNode, this),
@@ -142,12 +143,7 @@
 
 			// Search methods
 			search: $.proxy(this.search, this),
-			clearSearch: $.proxy(this.clearSearch, this),
-            //添加节点
-            addNode: $.proxy(this.addNode, this),
-            //删除节点
-            deleteNode: $.proxy(this.deleteNode, this),
-            setDeleteNode: $.proxy(this.setDeleteNode, this)
+			clearSearch: $.proxy(this.clearSearch, this)
 		};
 	};
 
@@ -204,6 +200,24 @@
 		this.$element.off('nodeUnselected');
 		this.$element.off('searchComplete');
 		this.$element.off('searchCleared');
+	};
+
+	Tree.prototype.addNode = function(identifiers, options) {
+		this.forEachIdentifier(identifiers,options,
+			$.proxy(function(node, options) {
+					this.setAddNode(node, options);
+				},
+				this));
+
+		this.setInitialStates({ nodes: this.tree }, 0);
+		this.render();
+	}
+
+	Tree.prototype.setAddNode = function(node, options) {
+		if (node.nodes == null) node.nodes = [];
+		if (options.node) {
+			node.nodes.push(options.node);
+		};
 	};
 
 	Tree.prototype.subscribeEvents = function () {
@@ -295,8 +309,8 @@
 			// set expanded state; if not provided based on levels
 			if (!node.state.hasOwnProperty('expanded')) {
 				if (!node.state.disabled &&
-						(level < _this.options.levels) &&
-						(node.nodes && node.nodes.length > 0)) {
+					(level < _this.options.levels) &&
+					(node.nodes && node.nodes.length > 0)) {
 					node.state.expanded = true;
 				}
 				else {
@@ -560,7 +574,7 @@
 				if (node.state.selected) {
 					classList.pop();
 					classList.push(node.selectedIcon || _this.options.selectedIcon ||
-									node.icon || _this.options.nodeIcon);
+						node.icon || _this.options.nodeIcon);
 				}
 
 				treeItem
@@ -598,7 +612,7 @@
 			else {
 				// otherwise just text
 				treeItem
-					.append('<span title='+node.text+'>'+node.text+'</span>');
+					.append(node.text);
 			}
 
 			// Add tags as badges
@@ -685,7 +699,7 @@
 		if (this.options.onhoverColor) {
 			style += '.node-' + this.elementId + ':not(.node-disabled):hover{' +
 				'background-color:' + this.options.onhoverColor + ';' +
-			'}';
+				'}';
 		}
 
 		return this.css + style;
@@ -694,118 +708,118 @@
 	Tree.prototype.template = {
 		list: '<ul class="list-group"></ul>',
 		item: '<li class="list-group-item"></li>',
-		indent: '<span class="indent"></span><span class="indent"></span>',
+		indent: '<span class="indent"></span>',
 		icon: '<span class="icon"></span>',
 		link: '<a href="#" style="color:inherit;"></a>',
 		badge: '<span class="badge"></span>'
 	};
 
-	Tree.prototype.css = '.treeview .list-group-item{cursor:pointer;border:none;padding:5px 15px}.treeview span.indent{margin-left:6px;margin-right:8px}.treeview span.icon{width:12px;}.treeview .node-disabled{color:silver;cursor:not-allowed}'
+	Tree.prototype.css = '.treeview .list-group-item{cursor:pointer}.treeview span.indent{margin-left:10px;margin-right:10px}.treeview span.icon{width:12px;margin-right:5px}.treeview .node-disabled{color:silver;cursor:not-allowed}'
 
 
 	/**
-		Returns a single node object that matches the given node id.
-		@param {Number} nodeId - A node's unique identifier
-		@return {Object} node - Matching node
-	*/
+	 Returns a single node object that matches the given node id.
+	 @param {Number} nodeId - A node's unique identifier
+	 @return {Object} node - Matching node
+	 */
 	Tree.prototype.getNode = function (nodeId) {
 		return this.nodes[nodeId];
 	};
 
 	/**
-		Returns the parent node of a given node, if valid otherwise returns undefined.
-		@param {Object|Number} identifier - A valid node or node id
-		@returns {Object} node - The parent node
-	*/
+	 Returns the parent node of a given node, if valid otherwise returns undefined.
+	 @param {Object|Number} identifier - A valid node or node id
+	 @returns {Object} node - The parent node
+	 */
 	Tree.prototype.getParent = function (identifier) {
 		var node = this.identifyNode(identifier);
 		return this.nodes[node.parentId];
 	};
 
 	/**
-		Returns an array of sibling nodes for a given node, if valid otherwise returns undefined.
-		@param {Object|Number} identifier - A valid node or node id
-		@returns {Array} nodes - Sibling nodes
-	*/
+	 Returns an array of sibling nodes for a given node, if valid otherwise returns undefined.
+	 @param {Object|Number} identifier - A valid node or node id
+	 @returns {Array} nodes - Sibling nodes
+	 */
 	Tree.prototype.getSiblings = function (identifier) {
 		var node = this.identifyNode(identifier);
 		var parent = this.getParent(node);
 		var nodes = parent ? parent.nodes : this.tree;
 		return nodes.filter(function (obj) {
-				return obj.nodeId !== node.nodeId;
-			});
+			return obj.nodeId !== node.nodeId;
+		});
 	};
 
 	/**
-		Returns an array of selected nodes.
-		@returns {Array} nodes - Selected nodes
-	*/
+	 Returns an array of selected nodes.
+	 @returns {Array} nodes - Selected nodes
+	 */
 	Tree.prototype.getSelected = function () {
 		return this.findNodes('true', 'g', 'state.selected');
 	};
 
 	/**
-		Returns an array of unselected nodes.
-		@returns {Array} nodes - Unselected nodes
-	*/
+	 Returns an array of unselected nodes.
+	 @returns {Array} nodes - Unselected nodes
+	 */
 	Tree.prototype.getUnselected = function () {
 		return this.findNodes('false', 'g', 'state.selected');
 	};
 
 	/**
-		Returns an array of expanded nodes.
-		@returns {Array} nodes - Expanded nodes
-	*/
+	 Returns an array of expanded nodes.
+	 @returns {Array} nodes - Expanded nodes
+	 */
 	Tree.prototype.getExpanded = function () {
 		return this.findNodes('true', 'g', 'state.expanded');
 	};
 
 	/**
-		Returns an array of collapsed nodes.
-		@returns {Array} nodes - Collapsed nodes
-	*/
+	 Returns an array of collapsed nodes.
+	 @returns {Array} nodes - Collapsed nodes
+	 */
 	Tree.prototype.getCollapsed = function () {
 		return this.findNodes('false', 'g', 'state.expanded');
 	};
 
 	/**
-		Returns an array of checked nodes.
-		@returns {Array} nodes - Checked nodes
-	*/
+	 Returns an array of checked nodes.
+	 @returns {Array} nodes - Checked nodes
+	 */
 	Tree.prototype.getChecked = function () {
 		return this.findNodes('true', 'g', 'state.checked');
 	};
 
 	/**
-		Returns an array of unchecked nodes.
-		@returns {Array} nodes - Unchecked nodes
-	*/
+	 Returns an array of unchecked nodes.
+	 @returns {Array} nodes - Unchecked nodes
+	 */
 	Tree.prototype.getUnchecked = function () {
 		return this.findNodes('false', 'g', 'state.checked');
 	};
 
 	/**
-		Returns an array of disabled nodes.
-		@returns {Array} nodes - Disabled nodes
-	*/
+	 Returns an array of disabled nodes.
+	 @returns {Array} nodes - Disabled nodes
+	 */
 	Tree.prototype.getDisabled = function () {
 		return this.findNodes('true', 'g', 'state.disabled');
 	};
 
 	/**
-		Returns an array of enabled nodes.
-		@returns {Array} nodes - Enabled nodes
-	*/
+	 Returns an array of enabled nodes.
+	 @returns {Array} nodes - Enabled nodes
+	 */
 	Tree.prototype.getEnabled = function () {
 		return this.findNodes('false', 'g', 'state.disabled');
 	};
 
 
 	/**
-		Set a node state to selected
-		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Set a node state to selected
+	 @param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.selectNode = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			this.setSelectedState(node, true, options);
@@ -815,10 +829,10 @@
 	};
 
 	/**
-		Set a node state to unselected
-		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Set a node state to unselected
+	 @param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.unselectNode = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			this.setSelectedState(node, false, options);
@@ -828,10 +842,10 @@
 	};
 
 	/**
-		Toggles a node selected state; selecting if unselected, unselecting if selected.
-		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Toggles a node selected state; selecting if unselected, unselecting if selected.
+	 @param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.toggleNodeSelected = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			this.toggleSelectedState(node, options);
@@ -842,9 +856,9 @@
 
 
 	/**
-		Collapse all tree nodes
-		@param {optional Object} options
-	*/
+	 Collapse all tree nodes
+	 @param {optional Object} options
+	 */
 	Tree.prototype.collapseAll = function (options) {
 		var identifiers = this.findNodes('true', 'g', 'state.expanded');
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
@@ -855,10 +869,10 @@
 	};
 
 	/**
-		Collapse a given tree node
-		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Collapse a given tree node
+	 @param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.collapseNode = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			this.setExpandedState(node, false, options);
@@ -868,9 +882,9 @@
 	};
 
 	/**
-		Expand all tree nodes
-		@param {optional Object} options
-	*/
+	 Expand all tree nodes
+	 @param {optional Object} options
+	 */
 	Tree.prototype.expandAll = function (options) {
 		options = $.extend({}, _default.options, options);
 
@@ -888,10 +902,10 @@
 	};
 
 	/**
-		Expand a given tree node
-		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Expand a given tree node
+	 @param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.expandNode = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			this.setExpandedState(node, true, options);
@@ -915,10 +929,10 @@
 	};
 
 	/**
-		Reveals a given tree node, expanding the tree from node to root.
-		@param {Object|Number|Array} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Reveals a given tree node, expanding the tree from node to root.
+	 @param {Object|Number|Array} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.revealNode = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			var parentNode = this.getParent(node);
@@ -932,10 +946,10 @@
 	};
 
 	/**
-		Toggles a nodes expanded state; collapsing if expanded, expanding if collapsed.
-		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Toggles a nodes expanded state; collapsing if expanded, expanding if collapsed.
+	 @param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.toggleNodeExpanded = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			this.toggleExpandedState(node, options);
@@ -946,9 +960,9 @@
 
 
 	/**
-		Check all tree nodes
-		@param {optional Object} options
-	*/
+	 Check all tree nodes
+	 @param {optional Object} options
+	 */
 	Tree.prototype.checkAll = function (options) {
 		var identifiers = this.findNodes('false', 'g', 'state.checked');
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
@@ -959,10 +973,10 @@
 	};
 
 	/**
-		Check a given tree node
-		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Check a given tree node
+	 @param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.checkNode = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			this.setCheckedState(node, true, options);
@@ -972,9 +986,9 @@
 	};
 
 	/**
-		Uncheck all tree nodes
-		@param {optional Object} options
-	*/
+	 Uncheck all tree nodes
+	 @param {optional Object} options
+	 */
 	Tree.prototype.uncheckAll = function (options) {
 		var identifiers = this.findNodes('true', 'g', 'state.checked');
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
@@ -985,10 +999,10 @@
 	};
 
 	/**
-		Uncheck a given tree node
-		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Uncheck a given tree node
+	 @param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.uncheckNode = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			this.setCheckedState(node, false, options);
@@ -998,10 +1012,10 @@
 	};
 
 	/**
-		Toggles a nodes checked state; checking if unchecked, unchecking if checked.
-		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Toggles a nodes checked state; checking if unchecked, unchecking if checked.
+	 @param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.toggleNodeChecked = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			this.toggleCheckedState(node, options);
@@ -1012,9 +1026,9 @@
 
 
 	/**
-		Disable all tree nodes
-		@param {optional Object} options
-	*/
+	 Disable all tree nodes
+	 @param {optional Object} options
+	 */
 	Tree.prototype.disableAll = function (options) {
 		var identifiers = this.findNodes('false', 'g', 'state.disabled');
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
@@ -1025,10 +1039,10 @@
 	};
 
 	/**
-		Disable a given tree node
-		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Disable a given tree node
+	 @param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.disableNode = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			this.setDisabledState(node, true, options);
@@ -1038,9 +1052,9 @@
 	};
 
 	/**
-		Enable all tree nodes
-		@param {optional Object} options
-	*/
+	 Enable all tree nodes
+	 @param {optional Object} options
+	 */
 	Tree.prototype.enableAll = function (options) {
 		var identifiers = this.findNodes('true', 'g', 'state.disabled');
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
@@ -1051,10 +1065,10 @@
 	};
 
 	/**
-		Enable a given tree node
-		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Enable a given tree node
+	 @param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.enableNode = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			this.setDisabledState(node, false, options);
@@ -1064,10 +1078,10 @@
 	};
 
 	/**
-		Toggles a nodes disabled state; disabling is enabled, enabling if disabled.
-		@param {Object|Number} identifiers - A valid node, node id or array of node identifiers
-		@param {optional Object} options
-	*/
+	 Toggles a nodes disabled state; disabling is enabled, enabling if disabled.
+	 @param {Object|Number} identifiers - A valid node, node id or array of node identifiers
+	 @param {optional Object} options
+	 */
 	Tree.prototype.toggleNodeDisabled = function (identifiers, options) {
 		this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
 			this.setDisabledState(node, !node.state.disabled, options);
@@ -1078,8 +1092,8 @@
 
 
 	/**
-		Common code for processing multiple identifiers
-	*/
+	 Common code for processing multiple identifiers
+	 */
 	Tree.prototype.forEachIdentifier = function (identifiers, options, callback) {
 
 		options = $.extend({}, _default.options, options);
@@ -1098,16 +1112,16 @@
 	*/
 	Tree.prototype.identifyNode = function (identifier) {
 		return ((typeof identifier) === 'number') ?
-						this.nodes[identifier] :
-						identifier;
+			this.nodes[identifier] :
+			identifier;
 	};
 
 	/**
-		Searches the tree for nodes (text) that match given criteria
-		@param {String} pattern - A given string to match against
-		@param {optional Object} options - Search criteria options
-		@return {Array} nodes - Matching nodes
-	*/
+	 Searches the tree for nodes (text) that match given criteria
+	 @param {String} pattern - A given string to match against
+	 @param {optional Object} options - Search criteria options
+	 @return {Array} nodes - Matching nodes
+	 */
 	Tree.prototype.search = function (pattern, options) {
 		options = $.extend({}, _default.searchOptions, options);
 
@@ -1150,8 +1164,8 @@
 	};
 
 	/**
-		Clears previous search results
-	*/
+	 Clears previous search results
+	 */
 	Tree.prototype.clearSearch = function (options) {
 
 		options = $.extend({}, { render: true }, options);
@@ -1168,12 +1182,12 @@
 	};
 
 	/**
-		Find nodes that match a given criteria
-		@param {String} pattern - A given string to match against
-		@param {optional String} modifier - Valid RegEx modifiers
-		@param {optional String} attribute - Attribute to compare pattern against
-		@return {Array} nodes - Nodes that match your criteria
-	*/
+	 Find nodes that match a given criteria
+	 @param {String} pattern - A given string to match against
+	 @param {optional String} modifier - Valid RegEx modifiers
+	 @param {optional String} attribute - Attribute to compare pattern against
+	 @return {Array} nodes - Nodes that match your criteria
+	 */
 	Tree.prototype.findNodes = function (pattern, modifier, attribute) {
 
 		modifier = modifier || 'g';
@@ -1187,50 +1201,14 @@
 			}
 		});
 	};
-    Tree.prototype.addNode = function(identifiers, options) {
-        this.forEachIdentifier(identifiers,options,
-            $.proxy(function(node, options) {
-                    this.setAddNode(node, options);
-                },
-                this));
 
-        this.setInitialStates({ nodes: this.tree }, 0);
-        this.render();
-    }
-
-    Tree.prototype.setAddNode = function(node, options) {
-        if (node.nodes == null) node.nodes = [];
-        if (options.node) {
-            node.nodes.push(options.node);
-        };
-    };
-
-    Tree.prototype.deleteNode = function (identifiers, options) {
-        this.forEachIdentifier(identifiers, options, $.proxy(function (node, options) {
-            var parentNode = this.getParent(node);
-            this.setDeleteNode(parentNode, node, options);
-        }, this));
-    };
-
-    Tree.prototype.setDeleteNode = function (node, deletenode, options) {
-        if (node.nodes != null) {
-            for (var i = node.nodes.length - 1; i >= 0; i--) {
-                var mynode = node.nodes[i];
-                if (mynode.id === deletenode.id) {
-                    node.nodes.splice(i, 1);
-                }
-            }
-            this.setInitialStates({ nodes: this.tree }, 0);
-            this.render();
-        }
-    };
 	/**
-		Recursive find for retrieving nested attributes values
-		All values are return as strings, unless invalid
-		@param {Object} obj - Typically a node, could be any object
-		@param {String} attr - Identifies an object property using dot notation
-		@return {String} value - Matching attributes string representation
-	*/
+	 Recursive find for retrieving nested attributes values
+	 All values are return as strings, unless invalid
+	 @param {Object} obj - Typically a node, could be any object
+	 @param {String} attr - Identifies an object property using dot notation
+	 @return {String} value - Matching attributes string representation
+	 */
 	Tree.prototype.getNodeValue = function (obj, attr) {
 		var index = attr.indexOf('.');
 		if (index > 0) {
